@@ -42,7 +42,7 @@ func main() {
 	server.Initialize()
 	// Seed()
 	// Server.Load()
-	server.Load()
+	Load(server.DB)
 	Run(":8099")
 }
 
@@ -64,7 +64,7 @@ func (server *Server) Initialize() {
 	server.DB.AutoMigrate(&Employee{})
 	server.Router = mux.NewRouter()
 	server.InitalizeRoutes()
-	server.Load()
+	Load(server.DB)
 
 }
 
@@ -78,16 +78,21 @@ func (s *Server) InitalizeRoutes() {
 // }
 
 func Load(DB *gorm.DB) {
-	err := DB.Debug().AutoMigrate(&Employee{})
+	err := DB.Debug().DropTableIfExists(&Employee{}).Error
+	if err != nil {
+		panic(err)
+	}
+	err = DB.Debug().AutoMigrate(&Employee{}).Error
 	if err != nil {
 		log.Fatal("Cannot automigrate the Table")
 	}
 
-	for i, emp := range Employ {
-		err = DB.Debug().Model(&Employee{}).Create(&emp[i]).Error
+	for i, _ := range Employ {
+		err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
 		if err != nil {
-			log.Fatal("Cannot push employee detail in DB")
+			log.Fatal("Cannot push employee detail in DB %v", err)
 		}
+		// err = DB.Debug().Model(&Employee{}).Create(&users[i])
 
 	}
 
