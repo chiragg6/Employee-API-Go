@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	// "github.com/crud_api/api"
@@ -75,6 +76,7 @@ func (server *Server) Initialize() {
 func (s *Server) InitalizeRoutes() {
 	s.Router.HandleFunc("/Get", GetEmployee).Methods("GET")
 	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
+	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
 }
 
 // func (s *Server)Load() {
@@ -145,6 +147,26 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(&emp)
 
+}
+
+// func FindByCondition(w http.ResponseWriter, r *http.Request) {
+// 	var err error
+// 	vars := mux.Vars(r)
+// 	// condition := vars["id"] || vars["city"]
+
+// }
+
+func DeleteById(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	id := vars["id"]
+	pid, _ := strconv.ParseInt(id, 10, 64)
+	// fmt.Println(pid)
+
+	err = server.DB.Debug().Model(&Employee{}).Where("ID = ?", pid).Take(&Employee{}).Delete(&Employee{}).Error
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Run(addr string) {
