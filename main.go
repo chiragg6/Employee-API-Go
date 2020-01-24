@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	// "github.com/crud_api/api"
 	"github.com/gorilla/mux"
@@ -124,6 +126,15 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	}
 	var emp Employee
 	err = json.Unmarshal(data, &emp)
+
+	if emp.ID == 0 {
+		// emp.ID = rand.Intn(1000)
+		n1 := rand.NewSource(time.Now().UnixNano())
+		random := rand.New(n1)
+		emp.ID = random.Int()
+		// Logic to get random number every time, if id is given 0
+
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -132,6 +143,7 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	json.NewEncoder(w).Encode(&emp)
 
 }
 
