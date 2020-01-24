@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -100,10 +102,37 @@ func Load(DB *gorm.DB) {
 
 func GetEmployee(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(w, "Welcome to Get employee details endpoint")
+
+	// emp := Employee{}
+	var AllEmp []Employee
+	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+	if err != nil {
+		panic(err)
+		// return
+	}
+	// fmt.Println(w, )
+	json.NewEncoder(w).Encode(AllEmp)
+
 }
 
 func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(w, "Welcome to Create Employee End Point")
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	var emp Employee
+	err = json.Unmarshal(data, &emp)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.DB.Debug().Create(&emp).Error
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func Run(addr string) {
