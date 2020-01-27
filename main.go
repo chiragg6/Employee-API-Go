@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -23,23 +24,26 @@ type Server struct {
 
 type Employee struct {
 	// gorm.Model
-	Name     string
-	ID       int
-	Location Adress
+	Name       string `json:"name"`
+	ID         int    `json:"id"`
+	Department string `json:"department"`
+	Location   Adress `json:"location"`
 }
 
 type Adress struct {
-	HouseNo   int
-	Apartment string
-	Street    string
-	City      string
-	Pincode   int
+	HouseNo   int    `json:"houseno"`
+	Apartment string `json:"apartment"`
+	Street    string `json:"street"`
+
+	City    string `json:"city"`
+	Pincode int    `json:"pincode"`
 }
 
 var Employ = []Employee{
 	Employee{
-		Name: "Chirag Gupta",
-		ID:   764,
+		Name:       "Chirag Gupta",
+		ID:         764,
+		Department: "Development",
 		Location: Adress{
 			HouseNo:   645,
 			Apartment: "NewMarvel",
@@ -49,8 +53,9 @@ var Employ = []Employee{
 		},
 	},
 	Employee{
-		Name: "Ankit Jain",
-		ID:   987,
+		Name:       "Ankit Jain",
+		ID:         987,
+		Department: "Management",
 		Location: Adress{
 			HouseNo:   776,
 			Apartment: "NewJerkey",
@@ -98,6 +103,8 @@ func (s *Server) InitalizeRoutes() {
 	s.Router.HandleFunc("/Get", GetEmployee).Methods("GET")
 	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
 	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
+	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("/GetByValue/{value}", GetEmployeeByInfo).Methods("GET")
 }
 
 // func (s *Server)Load() {
@@ -105,24 +112,25 @@ func (s *Server) InitalizeRoutes() {
 // }
 
 func Load(DB *gorm.DB) {
-	// err := DB.Debug().DropTableIfExists(&Employee{}).Error
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err := DB.Debug().DropTableIfExists(&Employee{}).Error
+	if err != nil {
+		panic(err)
+	}
 	// This function will drop Employee Table if exits
-	err := DB.Debug().AutoMigrate(&Employee{}).Error
+	err = DB.Debug().AutoMigrate(&Employee{}).Error
 	if err != nil {
 		log.Fatal("Cannot automigrate the Table")
 	}
 
-	// for i, _ := range Employ {
-	// 	err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
-	// 	if err != nil {
-	// 		log.Fatal("Cannot push employee detail in DB %v", err)
-	// 	}
-	// This function will re-create dummy data
-	// err = DB.Debug().Model(&Employee{}).Create(&users[i])
+	for i, _ := range Employ {
+		err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
+		if err != nil {
+			log.Fatal("Cannot push employee detail in DB %v", err)
+		}
+		// This function will re-create dummy data
+		// err = DB.Debug().Model(&Employee{}).Create(&users[i]).Error()
 
+	}
 }
 
 func GetEmployee(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +158,17 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	var emp Employee
 	err = json.Unmarshal(data, &emp)
 
+	if emp.Name == "" {
+		// fmt.Println("employee name is compulsory")
+		os.Exit(1)
+		// break
+	} else if emp.Department == "" {
+
+		fmt.Println("Department is a compulsory")
+
+	}
+	//Have to close program execution
+	// break
 	if emp.ID == 0 {
 		// emp.ID = rand.Intn(1000)
 		n1 := rand.NewSource(time.Now().UnixNano())
@@ -176,6 +195,28 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 // 	// condition := vars["id"] || vars["city"]
 
 // }
+
+func GetEmployeeByInfo(w http.ResponseWriter, r *http.Request) {
+	// You should be able to list employees by location (either only city or both city and street), by name or by department
+
+	vars := mux.Vars(r)
+	// city := vars["city"]
+	// street := vars["street"]
+	// name := vars["name"]
+	// department := vars["department"]
+
+	value := vars["value"]
+	var emp Employee
+	// server.DB.Where("City = ? || Street = ? || Name= ? || Deparment = ?", value).Find(&emp)
+
+	err := server.DB.Where("City = ?", value).Or("City = ?", value).Or("name = ?", value).Or("Department = ?", value).Scan(&emp)
+	if err != nil {
+		panic(err)
+	}
+
+	json.NewEncoder(w).Encode(&emp)
+
+}
 
 func DeleteById(w http.ResponseWriter, r *http.Request) {
 	// var err error
