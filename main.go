@@ -22,6 +22,7 @@ type Server struct {
 }
 
 type Employee struct {
+	// gorm.Model
 	Name string
 	ID   int
 	City string
@@ -43,7 +44,7 @@ var Employ = []Employee{
 var server = Server{}
 
 func main() {
-
+	// Server.Initialize()
 	server.Initialize()
 	// Seed()
 	// Server.Load()
@@ -84,23 +85,23 @@ func (s *Server) InitalizeRoutes() {
 // }
 
 func Load(DB *gorm.DB) {
-	err := DB.Debug().DropTableIfExists(&Employee{}).Error
-	if err != nil {
-		panic(err)
-	}
-	err = DB.Debug().AutoMigrate(&Employee{}).Error
+	// err := DB.Debug().DropTableIfExists(&Employee{}).Error
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// This function will drop Employee Table if exits
+	err := DB.Debug().AutoMigrate(&Employee{}).Error
 	if err != nil {
 		log.Fatal("Cannot automigrate the Table")
 	}
 
-	for i, _ := range Employ {
-		err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
-		if err != nil {
-			log.Fatal("Cannot push employee detail in DB %v", err)
-		}
-		// err = DB.Debug().Model(&Employee{}).Create(&users[i])
-
-	}
+	// for i, _ := range Employ {
+	// 	err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
+	// 	if err != nil {
+	// 		log.Fatal("Cannot push employee detail in DB %v", err)
+	// 	}
+	// This function will re-create dummy data
+	// err = DB.Debug().Model(&Employee{}).Create(&users[i])
 
 }
 
@@ -167,6 +168,9 @@ func DeleteById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	server.DB.Where("ID = ?", pid).Find(&Employee)
+	server.DB.Delete(&Employee)
 }
 
 func Run(addr string) {
