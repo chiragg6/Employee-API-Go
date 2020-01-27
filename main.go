@@ -23,21 +23,41 @@ type Server struct {
 
 type Employee struct {
 	// gorm.Model
-	Name string
-	ID   int
-	City string
+	Name     string
+	ID       int
+	Location Adress
+}
+
+type Adress struct {
+	HouseNo   int
+	Apartment string
+	Street    string
+	City      string
+	Pincode   int
 }
 
 var Employ = []Employee{
 	Employee{
 		Name: "Chirag Gupta",
 		ID:   764,
-		City: "Delhi",
+		Location: Adress{
+			HouseNo:   645,
+			Apartment: "NewMarvel",
+			Street:    "OldRoad",
+			City:      "Delhi",
+			Pincode:   600923,
+		},
 	},
 	Employee{
 		Name: "Ankit Jain",
 		ID:   987,
-		City: "Bangalore",
+		Location: Adress{
+			HouseNo:   776,
+			Apartment: "NewJerkey",
+			Street:    "Boriwali",
+			City:      "Mumbai",
+			Pincode:   848742,
+		},
 	},
 }
 
@@ -158,19 +178,21 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 // }
 
 func DeleteById(w http.ResponseWriter, r *http.Request) {
-	var err error
+	// var err error
 	vars := mux.Vars(r)
 	id := vars["id"]
 	pid, _ := strconv.ParseInt(id, 10, 64)
 	// fmt.Println(pid)
 
-	err = server.DB.Debug().Model(&Employee{}).Where("ID = ?", pid).Take(&Employee{}).Delete(&Employee{}).Error
-	if err != nil {
-		panic(err)
-	}
+	// err = server.DB.Debug().Model(&Employee{}).Where("ID = ?", pid).Take(&Employee{}).Delete(&Employee{}).Error
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	server.DB.Where("ID = ?", pid).Find(&Employee)
-	server.DB.Delete(&Employee)
+	var emp Employee
+
+	server.DB.Where("ID = ?", pid).Find(&emp)
+	server.DB.Delete(&emp)
 }
 
 func Run(addr string) {
