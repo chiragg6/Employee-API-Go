@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -25,7 +24,7 @@ type Server struct {
 type Employee struct {
 	// gorm.Model
 	Name       string `json:"name"`
-	ID         int    `json:"id"`
+	ID         int    `gorm:"unique" json:"id"`
 	Department string `json:"department"`
 	Location   Adress `json:"location"`
 }
@@ -118,6 +117,7 @@ func Load(DB *gorm.DB) {
 	}
 	// This function will drop Employee Table if exits
 	err = DB.Debug().AutoMigrate(&Employee{}).Error
+	err = DB.Debug().AutoMigrate(&Adress{}).Error
 	if err != nil {
 		log.Fatal("Cannot automigrate the Table")
 	}
@@ -146,6 +146,8 @@ func GetEmployee(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(w, )
 	json.NewEncoder(w).Encode(AllEmp)
 
+	// Get Employees is working totally fine
+
 }
 
 func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
@@ -156,16 +158,19 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	var emp Employee
-	err = json.Unmarshal(data, &emp)
+	err = json.Unmarshal(data, &emp) // Unmarshalling post content in struct
+
+	defer r.Body.Close()
 
 	if emp.Name == "" {
 		// fmt.Println("employee name is compulsory")
-		os.Exit(1)
+		// os.Exit(1)
+		return
 		// break
 	} else if emp.Department == "" {
 
-		fmt.Println("Department is a compulsory")
-
+		// fmt.Println("Department is a compulsory")
+		return
 	}
 	//Have to close program execution
 	// break
@@ -181,11 +186,20 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	err = server.DB.Debug().Create(&emp).Error
+	// server.DB.Save()
+
+	// err = server.DB.Debug().Create(&emp).Error
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	err = server.DB.Save(&emp).Error
 	if err != nil {
 		panic(err)
 	}
 	json.NewEncoder(w).Encode(&emp)
+
+	CreateEmployee Endpoint is working fine, if emp.name or department is not given it wont regsister the employee
 
 }
 
