@@ -116,6 +116,7 @@ func Load(DB *gorm.DB) {
 		panic(err)
 	}
 	// This function will drop Employee Table if exits
+	// if !DB.HasTable
 	err = DB.Debug().AutoMigrate(&Employee{}).Error
 	// err = DB.Debug().AutoMigrate(&Adress{}).Error
 	if err != nil {
@@ -124,6 +125,7 @@ func Load(DB *gorm.DB) {
 	// DB.Model(&Employee{}).Related(&Adress{})
 	for i, _ := range Employ {
 		err = DB.Debug().Model("Employee").Create(&Employ[i]).Error
+		// err = DB.Create(&Employ[len(Employ)-1]).Error
 		//err := DB.Model(&Employee{}).Related(&Adress{}).Save(&Employ[i]).Error
 		if err != nil {
 			log.Fatal("Cannot push employee detail in DB %v", err)
@@ -171,12 +173,15 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	if emp.Name == "" {
 		// fmt.Println("employee name is compulsory")
 		// os.Exit(1)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 		// break
 	} else if emp.Department == "" {
-
+		w.WriteHeader(http.StatusBadRequest)
+		// w.Write([]byte(Content not available)
 		// fmt.Println("Department is a compulsory")
 		return
+
 	}
 	//Have to close program execution
 	// break
