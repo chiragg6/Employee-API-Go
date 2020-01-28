@@ -99,11 +99,12 @@ func (server *Server) Initialize() {
 }
 
 func (s *Server) InitalizeRoutes() {
-	s.Router.HandleFunc("/Get", GetEmployee).Methods("GET")
+	s.Router.HandleFunc("/Get", GetAllEmployee).Methods("GET")
 	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
 	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
 	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
 	s.Router.HandleFunc("/GetByValue/{value}", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("/GetByID/{id}", GetEmployeeByID).Methods("GET")
 }
 
 // func (s *Server)Load() {
@@ -133,7 +134,7 @@ func Load(DB *gorm.DB) {
 	}
 }
 
-func GetEmployee(w http.ResponseWriter, r *http.Request) {
+func GetAllEmployee(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(w, "Welcome to Get employee details endpoint")
 
 	// emp := Employee{}
@@ -144,7 +145,12 @@ func GetEmployee(w http.ResponseWriter, r *http.Request) {
 		// return
 	}
 	// fmt.Println(w, )
-	json.NewEncoder(w).Encode(AllEmp)
+	response, _ := json.Marshal(&AllEmp)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
+
+	// json.NewEncoder(w).Encode(AllEmp)
 
 	// Get Employees is working totally fine
 
@@ -197,18 +203,32 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	json.NewEncoder(w).Encode(&emp)
+	// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
+	response, _ := json.Marshal(&emp)
 
-	CreateEmployee Endpoint is working fine, if emp.name or department is not given it wont regsister the employee
-
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
 }
 
-// func FindByCondition(w http.ResponseWriter, r *http.Request) {
-// 	var err error
-// 	vars := mux.Vars(r)
-// 	// condition := vars["id"] || vars["city"]
+func GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	value := vars["id"]
+	pid, _ := strconv.ParseInt(value, 10, 64)
 
-// }
+	var emp Employee
+	err := server.DB.First(&emp, Employee{ID: int(pid)}).Error
+	if err != nil {
+		panic(err)
+	}
+
+	response, _ := json.Marshal(&emp)
+
+	// json.NewEncoder(w).Encode(&emp)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
+}
 
 func GetEmployeeByInfo(w http.ResponseWriter, r *http.Request) {
 	// You should be able to list employees by location (either only city or both city and street), by name or by department
@@ -246,8 +266,17 @@ func DeleteById(w http.ResponseWriter, r *http.Request) {
 
 	var emp Employee
 
-	server.DB.Where("ID = ?", pid).Find(&emp)
+	server.DB.Where("id = ?", pid).Find(&emp)
 	server.DB.Delete(&emp)
+	response, err := json.Marshal(&emp)
+	if err != nil {
+		panic(err)
+	}
+
+	// RespondJSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
 }
 
 func Run(addr string) {
