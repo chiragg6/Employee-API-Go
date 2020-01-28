@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
 
 	// "github.com/crud_api/api"
 	"github.com/gorilla/mux"
@@ -23,10 +22,10 @@ type Server struct {
 
 type Employee struct {
 	// gorm.Model
-	Name       string `json:"name"`
+	Name       string `json:"name"` //To add column name `gorm:"column:beast_name"`
 	ID         int    `gorm:"unique" json:"id"`
 	Department string `json:"department"`
-	Location   Adress `json:"location"`
+	Location   Adress `json:"location" gorm:"embedded"`
 }
 
 type Adress struct {
@@ -91,7 +90,7 @@ func (server *Server) Initialize() {
 		fmt.Println("Server connection is success")
 	}
 
-	server.DB.AutoMigrate(&Employee{})
+	// server.DB.AutoMigrate(&Employee{})
 	server.Router = mux.NewRouter()
 	server.InitalizeRoutes()
 	Load(server.DB)
@@ -118,13 +117,14 @@ func Load(DB *gorm.DB) {
 	}
 	// This function will drop Employee Table if exits
 	err = DB.Debug().AutoMigrate(&Employee{}).Error
-	err = DB.Debug().AutoMigrate(&Adress{}).Error
+	// err = DB.Debug().AutoMigrate(&Adress{}).Error
 	if err != nil {
 		log.Fatal("Cannot automigrate the Table")
 	}
-
+	// DB.Model(&Employee{}).Related(&Adress{})
 	for i, _ := range Employ {
-		err = DB.Debug().Model(&Employee{}).Create(&Employ[i]).Error
+		err = DB.Debug().Model("Employee").Create(&Employ[i]).Error
+		//err := DB.Model(&Employee{}).Related(&Adress{}).Save(&Employ[i]).Error
 		if err != nil {
 			log.Fatal("Cannot push employee detail in DB %v", err)
 		}
@@ -182,9 +182,10 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	// break
 	if emp.ID == 0 {
 		// emp.ID = rand.Intn(1000)
-		n1 := rand.NewSource(time.Now().UnixNano())
-		random := rand.New(n1)
-		emp.ID = random.Int()
+		// n1 := rand.NewSource(time.Now().UnixNano())
+		// random := rand.New(n1)
+		// emp.ID = random.Int()
+		emp.ID = rand.Intn(10000)
 		// Logic to get random number every time, if id is given 0
 
 	}
@@ -243,12 +244,20 @@ func GetEmployeeByInfo(w http.ResponseWriter, r *http.Request) {
 	var emp Employee
 	// server.DB.Where("City = ? || Street = ? || Name= ? || Deparment = ?", value).Find(&emp)
 
-	err := server.DB.Where("City = ?", value).Or("City = ?", value).Or("name = ?", value).Or("Department = ?", value).Scan(&emp)
+	// err := server.DB.Where("City = ?", value).Or("City = ?", value).Or("name = ?", value).Or("Department = ?", value).Scan(&emp)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	err := server.DB.First(&emp, Employee{Name: value}).Error
 	if err != nil {
 		panic(err)
 	}
-
-	json.NewEncoder(w).Encode(&emp)
+	response, _ := json.Marshal(&emp)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
+	// json.NewEncoder(w).Encode(&emp)
 
 }
 
