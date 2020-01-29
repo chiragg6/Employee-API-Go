@@ -98,12 +98,12 @@ func (server *Server) Initialize() {
 }
 
 func (s *Server) InitalizeRoutes() {
-	s.Router.HandleFunc("/Get", GetAllEmployee).Methods("GET")
-	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
-	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
+	s.Router.HandleFunc("employee/get", GetAllEmployee).Methods("GET")
+	s.Router.HandleFunc("employee/create", CreateEmpployee).Methods("POST")
+	s.Router.HandleFunc("employee/delete/{id}", DeleteById).Methods("DELETE")
 	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("/GetByValue/{value}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("/GetByID/{id}", GetEmployeeByID).Methods("GET")
+	s.Router.HandleFunc("employee/getbyvalue/{value}", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("employee/getbyiD/{id}", GetEmployeeByID).Methods("GET")
 }
 
 // func (s *Server)Load() {
