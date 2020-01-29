@@ -190,31 +190,59 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 		// n1 := rand.NewSource(time.Now().UnixNano())
 		// random := rand.New(n1)
 		// emp.ID = random.Int()
-		emp.ID = rand.Intn(10000)
+		// emp.ID = rand.Intn(10000)
+		// random := rand.Int63n(time.Now().Unix()-94608000) + 94608000
+		// emp.ID = int(random)
+		// emp.ID = rand.Intn(100)
+		// if
 		// Logic to get random number every time, if id is given 0
 
+		var AllEmp []Employee
+		err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+		if err != nil {
+			panic(err)
+			// return
+
+		}
+		for _, employee := range AllEmp {
+			var number int
+			number = CreatingRandomNumber()
+			if employee.ID == number {
+				w.Write([]byte("ID is already taken"))
+				return
+			} else {
+				emp.ID = number
+			}
+		}
+
+		if err != nil {
+			panic(err)
+		}
+
+		// server.DB.Save()
+
+		// err = server.DB.Debug().Create(&emp).Error
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		err = server.DB.Save(&emp).Error
+		if err != nil {
+			panic(err)
+		}
+		// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
+		response, _ := json.Marshal(&emp)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(response))
 	}
-	if err != nil {
-		panic(err)
-	}
+}
 
-	// server.DB.Save()
+func CreatingRandomNumber() int {
+	random := rand.Intn(100)
+	return random
 
-	// err = server.DB.Debug().Create(&emp).Error
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	err = server.DB.Save(&emp).Error
-	if err != nil {
-		panic(err)
-	}
-	// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
-	response, _ := json.Marshal(&emp)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
 }
 
 func GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
