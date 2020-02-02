@@ -73,6 +73,7 @@ func main() {
 	// Server.Load()
 	Load(server.DB)
 	Run(":8099")
+
 }
 
 func (server *Server) Initialize() {
@@ -98,12 +99,12 @@ func (server *Server) Initialize() {
 }
 
 func (s *Server) InitalizeRoutes() {
-	s.Router.HandleFunc("employee/get", GetAllEmployee).Methods("GET")
-	s.Router.HandleFunc("employee/create", CreateEmpployee).Methods("POST")
-	s.Router.HandleFunc("employee/delete/{id}", DeleteById).Methods("DELETE")
+	s.Router.HandleFunc("/Get", GetAllEmployee).Methods("GET")
+	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
+	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
 	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("employee/getbyvalue/{value}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("employee/getbyiD/{id}", GetEmployeeByID).Methods("GET")
+	s.Router.HandleFunc("/GetByValue/{value}", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("/GetByID/{id}", GetEmployeeByID).Methods("GET")
 }
 
 // func (s *Server)Load() {
@@ -160,7 +161,8 @@ func GetAllEmployee(w http.ResponseWriter, r *http.Request) {
 
 func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(w, "Welcome to Create Employee End Point")
-
+	// queryParamas := r.URL.Query()
+	// id := queryParamas["id"]
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
@@ -174,15 +176,17 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("employee name is compulsory")
 		// os.Exit(1)
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Employee name is a compulsory field"))
 		return
 		// break
 	} else if emp.Department == "" {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Department is a compulsory field"))
 		// w.Write([]byte(Content not available)
 		// fmt.Println("Department is a compulsory")
 		return
-
 	}
+
 	//Have to close program execution
 	// break
 	if emp.ID == 0 {
@@ -236,6 +240,17 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(response))
+	} else {
+		err = server.DB.Save(&emp).Error
+		if err != nil {
+			panic(err)
+		}
+		// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
+		response, _ := json.Marshal(&emp)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(response))
 	}
 }
 
@@ -249,11 +264,28 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	value := vars["id"]
 	pid, _ := strconv.ParseInt(value, 10, 64)
+	// w.Write([]byte(strconv.Itoa(int(pid))))
 
-	var emp Employee
-	err := server.DB.First(&emp, Employee{ID: int(pid)}).Error
+	var AllEmp []Employee
+	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
 	if err != nil {
 		panic(err)
+	}
+	for _, employee := range AllEmp {
+		if employee.ID != int(pid) {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Data with concerned id doesnt exits"))
+			// os.Exit(1)
+			return
+		}
+	}
+
+	var emp Employee
+	err = server.DB.First(&emp, Employee{ID: int(pid)}).Error
+	if err != nil {
+		panic(err)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Not Database entry with concerned employee id"))
 	}
 
 	response, _ := json.Marshal(&emp)
@@ -307,6 +339,21 @@ func DeleteById(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	var emp Employee
+
+	// check for id exits in db or not
+	var AllEmp []Employee
+	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+	if err != nil {
+		panic(err)
+	}
+	for _, employee := range AllEmp {
+		if employee.ID != int(pid) {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Data with concerned id doesnt exits"))
+			// os.Exit(1)
+			return
+		}
+	}
 
 	server.DB.Where("id = ?", pid).Find(&emp)
 	server.DB.Delete(&emp)
