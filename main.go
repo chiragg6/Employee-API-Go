@@ -141,17 +141,20 @@ func GetAllEmployee(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(w, "Welcome to Get employee details endpoint")
 
 	// emp := Employee{}
-	var AllEmp []Employee
+	var AllEmp []Employee //AllEmp is an slice of type Employee struct
 	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
 	if err != nil {
 		panic(err)
+		w.Write([]byte(err.Error()))
 		// return
+	} else {
+
+		// fmt.Println(w, )
+		response, _ := json.Marshal(&AllEmp)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(response))
 	}
-	// fmt.Println(w, )
-	response, _ := json.Marshal(&AllEmp)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
 
 	// json.NewEncoder(w).Encode(AllEmp)
 
@@ -191,96 +194,94 @@ func CreateEmpployee(w http.ResponseWriter, r *http.Request) {
 	//Have to close program execution
 	// break
 	if emp.ID == 0 {
-		// emp.ID = rand.Intn(1000)
-		// n1 := rand.NewSource(time.Now().UnixNano())
-		// random := rand.New(n1)
-		// emp.ID = random.Int()
-		// emp.ID = rand.Intn(10000)
-		// random := rand.Int63n(time.Now().Unix()-94608000) + 94608000
-		// emp.ID = int(random)
-		// emp.ID = rand.Intn(100)
-		// if
-		// Logic to get random number every time, if id is given 0
 
-		var AllEmp []Employee
-		err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+		var employ Employee
+		var number int
+		number = CreatingRandomNumber()
+		// emp.ID = number
+		err := server.DB.Debug().Model(&Employee{}).Where("id= ?", number).Take(&employ).Error
 		if err != nil {
-			panic(err)
-			// return
+			fmt.Println("Concerted employee id doesnt exits in DB")
+			// w.Write([]byte("Employee with same employee id already exits"))
 
-		}
-		for i, _ := range AllEmp {
-			var number int
-			number = CreatingRandomNumber()
-			if number == AllEmp[i].ID {
-				w.Write([]byte("ID is already taken"))
-				return
-			} else {
-				emp.ID = number
+			emp.ID = number
+			err = server.DB.Save(&emp).Error
+			if err != nil {
+				panic(err)
 			}
+
+			response, _ := json.Marshal(&emp)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(response))
+		} else {
+			w.Write([]byte("ID exits please retry"))
 		}
-
-		if err != nil {
-			panic(err)
-		}
-
-		// server.DB.Save()
-
-		// err = server.DB.Debug().Create(&emp).Error
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		err = server.DB.Save(&emp).Error
-		if err != nil {
-			panic(err)
-		}
-		// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
-		response, _ := json.Marshal(&emp)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(response))
 	} else {
-		// check logic if entered employee id already present in db
-		// var All []Employee
-
-		// err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&All).Error
-		// if err != nil {
-		// 	panic(err)
-		// 	// return
-		// }
 
 		err = server.DB.Debug().Model(&Employee{}).Where("id= ?", emp.ID).Take(&emp).Error
 		if err != nil {
-			fmt.Println(err)
-			// w.Write()
-			return
+			err = server.DB.Save(&emp).Error
+			if err != nil {
+				panic(err)
+			}
+
+			response, _ := json.Marshal(&emp)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(response))
+
 		} else {
-			w.Write([]byte("ID exits"))
+			w.Write([]byte("Employee with entered ID already available"))
+			return
 		}
 
-		// for i, _ := range All {
-		// 	if emp.ID == All[i].ID {
-		// 		w.Write([]byte("Entry already exits with same employee ID"))
-		// 		return
-		// 		// os.Exit(1)
-		// 	} else {
-		// 		err = server.DB.Save(&emp).Error
-		// 		if err != nil {
-		// 			panic(err)
-		// 		}
-		// 		// fmt.Print;ln(w, "Showing latest updated employee ", (json.NewEncoder(w).Encode(&emp)))
-		// 		res, _ := json.Marshal(&emp)
-
-		// 		w.Header().Set("Content-Type", "application/json")
-		// 		w.WriteHeader(http.StatusOK)
-		// 		w.Write([]byte(res))
-
-		// 	}
-		// }
-
 	}
+
+	// var AllEmp []Employee
+	// err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+	// if err != nil {
+	// 	panic(err)
+	// 	// return
+
+	// }
+	// for i, _ := range AllEmp {
+	// 	var number int
+	// 	number = CreatingRandomNumber()
+	// 	if number == AllEmp[i].ID {
+	// 		w.Write([]byte("ID is already taken"))
+	// 		return
+	// 	} else {
+	// 		emp.ID = number
+	// 	}
+	// }
+
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// } else {
+	// 	// check logic if entered employee id already present in db
+	// 	// var All []Employee
+
+	// 	// err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&All).Error
+	// 	// if err != nil {
+	// 	// 	panic(err)
+	// 	// 	// return
+	// 	// }
+
+	// 	err = server.DB.Debug().Model(&Employee{}).Where("id= ?", emp.ID).Take(&emp).Error
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		// w.Write()
+	// 		return
+	// 	} else {
+	// 		w.Write([]byte("ID exits"))
+	// 	}
+
+	// }
 }
 
 func CreatingRandomNumber() int {
@@ -295,26 +296,28 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
 	pid, _ := strconv.ParseInt(value, 10, 64)
 	// w.Write([]byte(strconv.Itoa(int(pid))))
 
-	var AllEmp []Employee
-	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
-	if err != nil {
-		panic(err)
-	}
+	// var AllEmp []Employee
+	// err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+	// if err != nil {
+	// 	panic(err)
+	// }
 	var emp Employee
 
-	err = server.DB.Debug().Model(&Employee{}).Where("id= ?", pid).Take(&emp).Error
+	err := server.DB.Debug().Model(&Employee{}).Where("id= ?", pid).Take(&emp).Error
 	if err != nil {
 
 		// panic(err)
 		fmt.Println(err)
 		w.Write([]byte("Content with concerned id is not available in db"))
 		return
-	}
-	result, _ := json.Marshal(&emp)
+	} else {
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(result)
+		result, _ := json.Marshal(&emp)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	}
 
 	// for i, _ := range AllEmp {
 	// 	var num int
@@ -382,39 +385,19 @@ func DeleteById(w http.ResponseWriter, r *http.Request) {
 	pid, _ := strconv.ParseInt(id, 10, 64)
 	// fmt.Println(pid)
 
-	// err = server.DB.Debug().Model(&Employee{}).Where("ID = ?", pid).Take(&Employee{}).Delete(&Employee{}).Error
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	var emp Employee
-
-	// check for id exits in db or not
-	var AllEmp []Employee
-	err := server.DB.Debug().Model(&Employee{}).Limit(100).Find(&AllEmp).Error
+	err := server.DB.Debug().Model(&Employee{}).Where("ID = ?", pid).Take(&Employee{}).Delete(&Employee{}).Error
 	if err != nil {
-		panic(err)
-	}
-	for _, employee := range AllEmp {
-		if employee.ID != int(pid) {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("Data with concerned id doesnt exits"))
-			// os.Exit(1)
-			return
-		}
+		// panic(err)
+		fmt.Println(err)
+
+		w.Write([]byte("Employee with concerned ID not present in database"))
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Employee with concerned ID has been deleted"))
+
 	}
 
-	server.DB.Where("id = ?", pid).Find(&emp)
-	server.DB.Delete(&emp)
-	response, err := json.Marshal(&emp)
-	if err != nil {
-		panic(err)
-	}
-
-	// RespondJSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(response))
 }
 
 func Run(addr string) {
