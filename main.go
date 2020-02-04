@@ -78,7 +78,7 @@ func main() {
 
 func (server *Server) Initialize() {
 	var err error
-	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendevloper dbname=postgres password=dev sslmode=disable")
+	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendeveloper dbname=postgres password=dev sslmode=disable")
 	if err != nil {
 		fmt.Printf("Cannot connect to databaase")
 	}
@@ -99,12 +99,12 @@ func (server *Server) Initialize() {
 }
 
 func (s *Server) InitalizeRoutes() {
-	s.Router.HandleFunc("/Get", GetAllEmployee).Methods("GET")
-	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
-	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
+	s.Router.HandleFunc("/api/get", GetAllEmployee).Methods("GET")
+	s.Router.HandleFunc("/api/create", CreateEmpployee).Methods("POST")
+	s.Router.HandleFunc("/api/delete/{id}", DeleteById).Methods("DELETE")
 	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("/GetByValue/", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("/GetByID/{id}", GetEmployeeByID).Methods("GET")
+	s.Router.HandleFunc("/api/getbyvalue/", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("/api/getbyid/{id}", GetEmployeeByID).Methods("GET")
 }
 
 // func (s *Server)Load() {
