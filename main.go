@@ -78,7 +78,7 @@ func main() {
 
 func (server *Server) Initialize() {
 	var err error
-	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendeveloper dbname=postgres password=dev sslmode=disable")
+	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendevloper dbname=postgres password=dev sslmode=disable")
 	if err != nil {
 		fmt.Printf("Cannot connect to databaase")
 	}
@@ -103,7 +103,7 @@ func (s *Server) InitalizeRoutes() {
 	s.Router.HandleFunc("/Create", CreateEmpployee).Methods("POST")
 	s.Router.HandleFunc("/Delete/{id}", DeleteById).Methods("DELETE")
 	// s.Router.HandleFunc("/GetByValue/{city}/{name}/{department}/{street}", GetEmployeeByInfo).Methods("GET")
-	s.Router.HandleFunc("/GetByValue/{value}", GetEmployeeByInfo).Methods("GET")
+	s.Router.HandleFunc("/GetByValue/", GetEmployeeByInfo).Methods("GET")
 	s.Router.HandleFunc("/GetByID/{id}", GetEmployeeByID).Methods("GET")
 }
 
@@ -351,25 +351,41 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
 func GetEmployeeByInfo(w http.ResponseWriter, r *http.Request) {
 	// You should be able to list employees by location (either only city or both city and street), by name or by department
 
-	vars := mux.Vars(r)
-	// city := vars["city"]
-	// street := vars["street"]
-	// name := vars["name"]
-	// department := vars["department"]
+	query := r.URL.Query()
 
-	value := vars["value"]
+	city := query.Get("city")
+	street := query.Get("street")
+	name := query.Get("name")
+	department := query.Get("department")
+
 	var emp Employee
-	// server.DB.Where("City = ? || Street = ? || Name= ? || Deparment = ?", value).Find(&emp)
+	if city != "" && street != "" {
+		err := server.DB.Debug().Model(&Employee{}).Where("city = ? AND steet = ?", city, street).Find(&emp).Error
+		if err != nil {
+			fmt.Println(err)
+		}
 
-	// err := server.DB.Where("City = ?", value).Or("City = ?", value).Or("name = ?", value).Or("Department = ?", value).Scan(&emp)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	err := server.DB.First(&emp, Employee{Name: value}).Error
-	if err != nil {
-		panic(err)
+	} else if city != "" {
+		err := server.DB.Debug().Model(&Employee{}).Where("city = ? ", city).Find(&emp).Error
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if name != "" {
+		err := server.DB.Debug().Model(&Employee{}).Where("name = ?", name).Find(&emp).Error
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if department != "" {
+		err := server.DB.Debug().Model(&Employee{}).Where("department = ?", department).Find(&emp).Error
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		w.Write([]byte("No employee info is present in db matching the query values"))
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
+
 	response, _ := json.Marshal(&emp)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -377,6 +393,23 @@ func GetEmployeeByInfo(w http.ResponseWriter, r *http.Request) {
 	// json.NewEncoder(w).Encode(&emp)
 
 }
+
+// func queryParams(w http.ResponseWriter, r *http.Request) {
+// 	// http://localhost:8080/products?filter=color
+// 	// there is one query parameter filter
+
+// 	// Getting query parameters
+
+// 	// localhost:9090/products?filter=color&filter=price&filter=brand
+// 	query := r.URL.Query()
+// 	filters, present := query["filters"] // query will get multiple values with filters key
+// 	if !present || len(filters) == 0 {
+// 		fmt.Println("filters not present")
+// 	}
+// 	query.Get("city")
+// 	w.Write([]byte(strings.Join(filters, ",")))
+
+// }
 
 func DeleteById(w http.ResponseWriter, r *http.Request) {
 	// var err error
