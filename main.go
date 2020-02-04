@@ -78,7 +78,7 @@ func main() {
 
 func (server *Server) Initialize() {
 	var err error
-	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendeveloper dbname=postgres password=dev sslmode=disable")
+	server.DB, err = gorm.Open("postgres", "host=localhost port=5432 user=aicumendevloper dbname=postgres password=dev sslmode=disable")
 	if err != nil {
 		fmt.Printf("Cannot connect to databaase")
 	}
